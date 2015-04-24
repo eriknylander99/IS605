@@ -1,0 +1,170 @@
+---
+title: "Assignment 13 Integration and Differentiation"
+author: "Erik Nylander"
+date: "Monday, April 13, 2015"
+output: html_document
+---
+### Part 1 - Computing the Derivative using the Formal Definition
+For this problem we will be computing the derivative of a given function using the limit definition of the derivative:
+$$
+f'(x) = \lim_{h \to 0} \frac{f(x+h)-f(x)}{h}
+$$
+To calculate this limit I will compute the following two limits and average those results together:
+$$
+f'(x) = \lim_{h \to 0^+} \frac{f(x+h)-f(x)}{h} \\
+f'(x) = \lim_{h \to 0^-} \frac{f(x+h)-f(x)}{h}
+$$
+In R we can approximate these limits by computing the function with a small value for $h$, say 1e-8. Once we have both values we can then average the two limits to get a linear approximation of the actual value of the limit. For this problem we will be finding the derivative of $f(x) = x^3 + 2x^2$ using the process described above. This is done through the derivative() function defined below.
+```{r}
+derivative <- function(x, h=1e-8){
+    # Calculates the derivative of the function f(x)=x^3 + 2x^2 using an approximation of the limit.
+    #
+    # Args:
+    #   x = The value that we would like to calculate the derviative for.
+    #   h = The value that is added or subtracted from x to approximate the limit.
+    #
+    # Returns:
+    #   dx = The approximate value of the derivative calculated by approximating the limit.
+    
+    fxhpos <- (x+h)^3 + 2*(x+h)^2
+    fxhneg <- (x-h)^3 + 2*(x-h)^2
+    fx <- x^3 + 2*x^2
+    upperdx <- (fxhpos - fx)/h
+    lowerdx <- (fxhneg - fx)/-h
+    dx <- (lowerdx + upperdx)/2
+    return(dx)
+}
+```
+Now we can test this function using a couple of values. To check our results we will also calculate these by hand:
+$$
+f'(x) = 3x^2 + 4x
+$$
+We will test our function at $x = 3$ and $x = -2$. From our above calculation we expect to get $f'(7) = 39$ and $f'(x) = 4$ respectively.
+```{r}
+derivative(3)
+derivative(-2)
+```
+We can see that our function does a very nice job of approximating the derivative at these two points.
+
+
+### Part 2 - Calculating the Integral using a Sum
+For this problem we will calculating the integral of a given function by taking a series of small rectangles and adding up the area of each rectangle. We can formally define the process as:
+$$
+\int_{a}^{b} f(x) = \lim_{x \to \infty} \sum_{i=1}^{n} {f(x_i)} \Delta x
+$$
+For this problem we approximate the integral of $f(x) = 3x^2 + 4x$ over the interval $x = [1,3]$. To calculate this value we will divide the interval into a number of small subintervals using $\Delta x =$ 1e-6. We will then sum up the area of the small rectangles that are created by $f(x_i) \Delta x$ and return this value.
+```{r}
+integral <- function(){
+    # Calculates the integral of 3x^2 + 4x using a left Riemann sum.
+    #
+    # Args:
+    #   none
+    #
+    # Returns:
+    #   area = The approximation of the area under teh curve.
+    a <- 1
+    b <- 3
+    deltax <- 1e-6
+    subint <- (b-a)/deltax # divides the region into subintervals
+    area <- 0
+    for(i in 1:subint){
+        area <- area + (3*a^2 + 4*a)*deltax
+        a <- a + deltax
+    }
+    return(area)
+}
+```
+We can then test our function against the known value of the integral:
+$$
+\int_{1}^{3} {3x^2 + 4x} dx = \left. {x^3 + 2x^2} \right|_{1}^{3} = 42
+$$
+```{r}
+integral()
+```
+As we can see our function slightly underestimates the area under the curve. This is explained by the fact that $f(x)$ is strictly increasing over $x=[1,3]$, therefore this method of estimating the area will underestimate the actual value.
+
+### Part 3 - Analytic Calculus
+
+#### Integration by Parts
+
+##### Problem 1
+Use integration by parts to find $\int \sin(x) \cos(x) dx$
+
+First we need to pick our $f$ and $g'$ and calculate our $f'$ and $g$:
+$$
+f = \cos(x) \;
+f' = -\sin(x) \\
+g' = \sin(x) \;
+g = -\cos(x) + C
+$$
+
+Applying integration by parts we get:
+$$
+\int \sin(x) \cos(x) dx =
+\cos(x) * -\cos(x) + C - \int -\sin(x) * - \cos(x) dx \\
+\int \sin(x) \cos(x) dx =
+-\cos^2(x) + C - \int \sin(x) \cos(x) dx \\ 
+2 \int \sin(x) \cos(x) dx = -\cos^2(x) + C \\
+\int \sin(x) \cos(x) dx = -\frac{\cos^2(x)}{2} + C
+$$
+
+##### Problem 2
+Use integration by parts to find $\int x^2 e^x dx$:
+
+First we need to pick our $f$ and $g'$ and calculate our $f'$ and $g$:
+$$
+f = x^2 \;
+f' = 2x \\
+g' = e^x \;
+g = e^x + C
+$$
+
+Applying integration by parts we get:
+$$
+\int x^2 e^x dx = x^2 e^x + C - \int 2x e^x dx
+$$
+
+We need to apply integration by parts again to calculate the integral again. So picking new values for $f$ and $g'$ we get the following:
+$$
+f = 2x \;
+f' = 2 \\
+g' = e^x \;
+g = e^x + C
+$$
+
+Applying this to the previous interval gives us the following:
+$$
+\int x^2 e^x dx = x^2 e^x + C - (2x e^x - 2 \int e^x dx) \\
+\int x^2 e^x dx = x^2 e^x - 2x e^x - 2e^x + C \\
+\int x^2 e^x dx = e^x(x^2 - 2x - 2) + C
+$$
+
+#### Differentiation
+
+##### Problem 1
+
+Find $\frac{d}{dx} (x \cos(x))$
+
+To find this derivative we need to apply the product rule giving us:
+$$
+\frac{d}{dx} (x \cos(x)) = \frac{d}{dx}(x) * \cos(x) + x * \frac{d}{dx}(\cos(x)) \\
+\frac{d}{dx} (x \cos(x)) = 1 * \cos(x) + x * -\sin(x) \\
+\frac{d}{dx} (x \cos(x)) = \cos(x) - x\sin(x)
+$$
+
+##### Problem 2
+
+Find $\frac{d}{dx} (e^{x^4})$
+
+To find this deriative we need to apply the chain rule. To do this we first pick a value for $u$ and calculate $\frac{du}{dx}$:
+$$
+u = x^4 \\
+du = 4x^3 dx \\
+\frac{du}{dx} = 4x^3
+$$
+
+We now use our $u$ substitution to calculate the derivative:
+$$
+\frac{d}{dx} (e^{x^4}) = \frac{d}{dx}(e^u) = e^u \frac{du}{dx} = \\
+e^{x^4} * 4x^3 = 4x^3 e^{x^4}
+$$
