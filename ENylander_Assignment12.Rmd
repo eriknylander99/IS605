@@ -1,0 +1,5 @@
+2015-04-21 20:49:58 EDT LOG:  received fast shutdown request
+2015-04-21 20:49:58 EDT LOG:  aborting any active transactions
+2015-04-21 20:49:58 EDT LOG:  autovacuum launcher shutting down
+2015-04-21 20:49:58 EDT LOG:  shutting down
+2015-04-21 20:49:58 EDT LOG:  database system is shut down

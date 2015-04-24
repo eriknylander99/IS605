@@ -1,0 +1,75 @@
+---
+title: "Assignment 8 - Bayes Theorem"
+author: "Erik Nylander"
+output: html_document
+---
+
+### Question 1 - Applying Bayes Rule
+What is the probability that our co-worker took the bus given that she is on time.
+To calculate this using Bayes rule lets first lay out the probabilities that we have.
+First the probabilities of how she got to work: 
+$$
+p(bus) = \frac{10}{30} = \frac{1}{3} \\
+p(train) = \frac{20}{30} = \frac{2}{3}
+$$
+Now the probabilities of being on time given that she took each form of transportation: 
+$$
+p(ot|bus) = .5 \\
+p(ot|train) = .9
+$$
+With this information we can now apply Bayes Rule using:
+$$
+p(bus|ot) = \frac{p(ot|bus)p(bus)}{p(ot|bus)p(bus) + p(ot|train)p(train)}
+$$
+Applying our probabilities from above we get the following:
+$$
+p(bus|ot) = \frac{.5*\frac{1}{3}}{.5(\frac{1}{3}) + .9(\frac{2}{3})} = \frac{5}{23} = .2173913043
+$$
+This tells us that the probability of our co-worker riding the bus given that she was on time is .21739.
+
+
+### Question 2 - Constructing a Bayesian Network
+For this question we want to construct the Bayesian Network for the grades data that was included in the notes. To accomplish this I'll use the gRain() package to construct the network.
+```{r}
+suppressWarnings(suppressMessages(library(Rgraphviz)))
+suppressWarnings(suppressMessages(library(gRain)))
+```
+
+The first thing is to construct all of the various probabilities to construct the Bayesian Tree. We do this through the use of cptable() command and then compile them together with the compileCPT() command.
+```{r}
+ny <- c("no", "yes")
+lh <- c("low", "high")
+d <- cptable(~difficulty, values=c(3,7), levels=ny)
+i <- cptable(~intelligence, values=c(8,2), levels=lh)
+s.i <- cptable(~sat|intelligence, values=c(9,1,2,8), levels=lh)
+g.di <- cptable(~grade|difficulty:intelligence, values=c(6,4,8,2,1,99,1,9), levels=lh)
+l.g <- cptable(~letter|grade, values=c(9,1,5,95 ), levels=lh)
+
+plist <- compileCPT(list(d,i,s.i,g.di,l.g))
+```
+
+Now we can take a look at the graph of the Bayesian Tree that has been created.
+```{r}
+grades_n <- grain(plist)
+plot(grades_n)
+```
+
+Once we have the tree we can now query the tree to find out things about the probabilities. We will start by looking at all of the probabilities in the tree.
+```{r}
+(querygrain(grades_n, nodes=c("difficulty", "intelligence", "sat", "grade", "letter"), 
+            type="marginal"))
+```
+
+Next to answer the questions that we were asked. First, what is the probability of course difficulty given that there was a good letter of recommendation?
+```{r}
+grades_n.1 <- setFinding(grades_n, nodes=c("letter"), states=c("high"))
+(querygrain(grades_n.1, nodes=c("difficulty"), type="marginal"))
+```
+We can see that given that there is a good letter of recommendation then there is a probability of .6268 of the course being difficult and a probability of .3731 of the course being not difficult.
+
+If we also add the information that there was a high SAT score then we find the the following probabilities for the courses difficulty:
+```{r}
+grades_n.2 <- setFinding(grades_n.1, nodes=c("sat"), states=c("high"))
+(querygrain(grades_n.2, nodes=c("difficulty"), type="marginal"))
+```
+We can see that given that there is a good letter of recommendation then there is a probability of .6676 of the course being difficult and a probability of .3323 of the course being not difficult.

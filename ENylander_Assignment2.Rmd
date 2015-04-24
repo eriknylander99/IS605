@@ -1,0 +1,104 @@
+---
+title: "Assignment 2"
+author: "Erik Nylander"
+date: "Tuesday, February 03, 2015"
+output: html_document
+---
+
+### Problem Set 1
+
+1) Show that $A^T A \neq A A^T$ in general.
+Lets assume that $A^T A = A A^T$ and see if there is a counter example.
+Let A be the matrix: $A = \begin{bmatrix} a & b & c \\ d & e & f \end{bmatrix}$ and 
+$A^T = \begin{bmatrix} a & d \\ b & e \\ c & f \end{bmatrix}$ therefore:
+$$
+A^T A = 
+\begin{bmatrix} a & d \\ b & e \\ c & f \end{bmatrix}
+\begin{bmatrix} a & b & c \\ d & e & f \end{bmatrix} =
+\begin{bmatrix} 
+a^2 + d^2 & ab + de & ac + df \\ 
+ba + ed & b^2 + e^2 & bc + ef \\
+ca+fd & cb + fe & c^2 + f^2 
+\end{bmatrix}
+$$
+$$
+A A^T = 
+\begin{bmatrix} a & b & c \\ d & e & f \end{bmatrix}
+\begin{bmatrix} a & d \\ b & e \\ c & f \end{bmatrix} =
+\begin{bmatrix}
+a^2 + b^2 + c^2 & ad + be + cf \\
+da + eb + fc & d^2 + e^2 + f^2
+\end{bmatrix}
+$$
+Since $A^T A \neq A A^T$ in our example we know that in general $A^T A \neq A A^T$
+
+
+2) $A^T A = A A^T$ is true if $A$ is a diagonal matrix. 
+Let $A = \begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix}$ then
+$A^T = \begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix}$ therefore:
+$$
+A^T A =
+\begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix}
+\begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix} =
+\begin{bmatrix} a^2 & 0 & 0 \\ 0 & b^2 & 0 \\ 0 & 0 & c^2 \end{bmatrix}
+$$
+$$
+A A^T =
+\begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix}
+\begin{bmatrix} a & 0 & 0 \\ 0 & b & 0 \\ 0 & 0 & c \end{bmatrix} =
+\begin{bmatrix} a^2 & 0 & 0 \\ 0 & b^2 & 0 \\ 0 & 0 & c^2 \end{bmatrix}
+$$
+This gives a case when $A^T A = A A^T$ is true.
+
+### Problem Set 2
+
+To perform the LU decomposition of the matrix I'll be taking the given matrix, generating an identity matrix and using it to store the steps for deconstructing
+the matrix. The function will return the lower and upper matrices in a vector.
+
+```{r}
+LUDecomp <- function(U){
+    # Computes the LU decomposition of square matrix.
+    #
+    # Args:
+    #   U = A square matrix
+    #
+    # Returns:
+    #   result = A list containg the lower and upper diagonal matrices.
+    #
+    
+    L<-diag(dim(U)[1]) # Identity matrix that stores the elimination matrices
+    # Outer for loop traverses the rows and the inner for loop traverses the columns
+    for (i in 2:dim(U)[2]){
+        for (n in 1:(i-1)){
+            E<-diag(dim(U)[2])
+            E[i,n]<- -(U[i,n]/U[n,n]) # Generates the Elimination matrix for each step
+            U <- E %*% U # Eliminates the element from the upper diagonal matrix
+            L <- L %*% solve(E) # Stores the elimination step
+        }
+    }
+    result <- list('lower'=L, 'upper'=U)
+    return(result)
+}
+```
+
+#### Testing with a 2X2 Matrix
+```{r}
+(A1 <- matrix(c(-3,1,6,-8), nrow=2))
+(R1 <- LUDecomp(A1))
+R1$lower %*% R1$upper
+```
+
+#### Testing with a 3X3 Matrix
+```{r}
+(A2 <- matrix(c(1,2,3,1,1,1,2,0,1), nrow=3))
+(R2 <- LUDecomp(A2))
+R2$lower %*% R2$upper
+```
+
+#### Testing with a 5X5 Matrix
+```{r}
+set.seed(42)
+(A3 <- matrix(sample(1:10, 25, replace=TRUE), nrow=5))
+(R3 <- LUDecomp(A3))
+R3$lower %*% R3$upper
+```

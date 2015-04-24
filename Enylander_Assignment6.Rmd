@@ -1,0 +1,199 @@
+---
+title: "Assignment 6"
+author: "Erik Nylander"
+output: html_document
+---
+
+### Problem Set 1
+
+1) If you roll a far die 3 times there are $6*6*6 = 216$ possible outcomes.
+
+2) When you roll a die 2 times there are $6*6 = 36$ possible outcomes. To calculate the probability of getting a 3 we take the number of ways of getting a 3, $2$ and divide these values. This gives us $\frac{2}{36} = \frac{1}{18}$ probability of getting a sum of 3.
+
+3) Given a room of 25 strangers, what is the probability that two strangers will share the same birthday?
+The easier way to calculate this is to calculate the probability that none of the strangers in the room have the same birthday. We can then use the following $p(n) = 1 - \bar{p}(n)$ to calculate the probability that at least one set of people has the same birthday.
+
+To calculate the probability lets look at what happens with a small group of three people:
+First Person - probability of not sharing a birthday = $\frac{365}{365}$
+Second Person - probability of not sharing a birthday with the first person = $\frac{364}{365}$
+Third Person - probability of not sharing a birthday with the first two people = $\frac{363}{365}$
+
+Since we are assuming that these birthdays are independent we can simply multiply these probabilities to get $\bar{p} = \frac{365}{365} * \frac{364}{365} * \frac{363}{365} = \frac{365*364*363}{365^3}$
+
+We can then extend this to $n$ people:
+$$
+\bar{p} = \frac{1}{365^n}*\frac{365!}{(365-n)!} =
+\frac{1}{365^n}*_{365}P_r
+$$
+
+For 25 people in the room we get the following:
+```{r}
+perm <- function(n,r){choose(n,r) * factorial(r)}
+prob.25bar <- 1/365^25 * perm(365,25)
+prob.25 <- 1 - prob.25bar
+prob.25
+```
+The probability of at least 2 people sharing a birthday in a room of 25 strangers is $p(25) = 0.5686997 = 56.86997\%$.
+
+For 50 people in the room we get the following:
+```{r}
+prob.50bar <- 1/365^50 * perm(365,50)
+prob.50 <- 1 - prob.50bar
+prob.50
+```
+The probability of at least 2 people sharing a birthday in a room of 50 strangers is $p(50) = 0.9703736 = 97.03736\%$.
+
+### Problem Set 2
+
+#### Single Word Probability
+For the first question I've constructed two functions. TextClean() takes a document that has been read into R using scan() and cleans the punctuation creating a vector of lower case words. This function is called from inside the second function WordProbs(). WordProbs() calculates the probability of a word occurring in the document and returns a data frame including each word it's frequency in the document and it's probability in raw form and as a percentage.
+```{r}
+TextClean <- function(doc){
+    # Cleans the puncuation from a document including, hyphen, quotes, numeric data, and other special characters.     
+    #
+    # Args:
+    #   doc = A character vector that results from the scan() function.
+    #
+    # Returns:
+    #   result = A character vector that has been cleaned of puncuation. 
+    
+    txt <- iconv(doc, "UTF-8", "ASCII", sub="?")
+    txt <- gsub('[\\-\\.\\?\'\\$\\,\\"0-9]', '', txt)
+    txt <- unlist(strsplit(txt, '[-]'))
+    txt <- txt[txt != '']
+    txt <- tolower(txt)
+    return(txt)
+}
+
+WordProbs <- function(doc){
+    # Takes a document that has been read in using the scan() function and calculates the probability of each word in the document.
+    #
+    # Args:
+    #   doc = A character vector that results from the scan() function.
+    #
+    # Returns:
+    #   result = A dataframe containing each word in the document, the frequency of that word and it's probability 
+    
+    library(dplyr)
+    words <- TextClean(doc)
+    prob <- as.data.frame(table(words))
+    prob <- prob %>%
+        mutate(probs = Freq/sum(Freq),
+               percent = 100*probs)
+    return(prob)
+}
+```
+Now that the functions have been created, I'll read in the test file and generate the data frame containing the probabilities. I'll inspect the data set and check some of the words for their probabilities.
+```{r}
+doc <- scan('assign6.sample.txt', character(0), quote=NULL, encoding = "UTF-8")
+probability <- WordProbs(doc)
+head(probability)
+tail(probability)
+filter(probability, words == "the")
+filter(probability, words == "a")
+filter(probability, words == "prison")
+filter(probability, probs == max(probs))
+```
+As expected the word with the highest probability of occurrence was "the" and for a story about prisons, prison occurs 11 times in the story.
+
+#### Multi-word Probability
+For the second part of the question I'll be looking at the probability of two words occurring together in a sentence. To complete this part of the problem I also constructed three functions. The first, RemovePuncuation() is a more advanced version of TextClean() that takes a character vector congaing the text of the document and removes abbreviations and then splits the text by sentence. I'd like to thank Xingjia Wu and Saheli Kar for their help in constructing the regular expression that finds the location of the punctuation. The second function WordPairs() takes the character vector and creates the two outputs, a dataframe containing all of the single words in the text and all of the word pairs in the text. The final function TwoWordProbs() takes the document to be analyzed and the two words that we want to find the probabilities of occurring together prints out the probabilities.
+```{r}
+RemovePuncuation <- function(s){
+    # Takes a character vector and strips out the puncuation after abbriviations for each element of the vector.
+    #
+    # Args:
+    #   s = A character vector that results from the scan() function.
+    #
+    # Returns:
+    #   s = A character string with the puncuation removed.
+     
+    for(i in 1:length(s)){
+        string <- s[i]
+        punc.loc <- regexpr(" [A-Z]{1}[a-z]{0,2}[\\.{1}]", string)
+        punc.length <- attr(punc.loc, "match.length")
+        while(punc.loc != -1){
+            string <- paste0(substring(string, 1, punc.loc+punc.length-2), 
+                             substring(string, punc.loc+punc.length))
+            punc.loc <- regexpr(" [A-Z]{1}[a-z]{0,2}[\\.{1}]", string)
+            punc.length <- attr(punc.loc, "match.length")
+        }
+        s[i] <- string
+    }
+    s <- iconv(s, "UTF-8", "ASCII", sub="?")
+    s <- unlist(strsplit(s, "[.]"))
+    return(s)
+}
+
+WordPairs <- function(doc){
+    # Takes a character vector and creates a dataframe of the number of times 
+    # each word appears and the number of times each word pair appears.
+    #
+    # Args:
+    #   doc = A character vector that results from the scan() function.
+    #
+    # Returns:
+    #   results = A list of the two dataframes single for the words and pairs for the word pairs.
+    
+    require(dplyr)
+    word.single <- c()
+    word.pairs <- c()
+    for(i in 1:length(doc)){
+        words <- TextClean(doc[i])
+        words <- unlist(strsplit(words,"[ ]"))
+        words <- words[words != ""]
+        word.single <- c(word.single, words)
+        word.pairs <- c(word.pairs, paste(words, lead(words), sep=":"))
+    }
+    results <- list("single" = word.single, "pairs" = word.pairs)
+    return(results)
+}
+
+TwoWordProbs <- function(doc, word1, word2){
+    # Takes a character vector and two words. Calculates the probability of 
+    # each word and probability of the two words appearing together and prints
+    # the output values.
+    #
+    # Args:
+    #   doc = A cahracter vector containg the document
+    #   word1 = First word to check
+    #   word2 = Second word to check
+    #
+    # Returns:
+    #   none
+    
+    word1 <- tolower(word1)
+    word2 <- tolower(word2)
+    temp <- RemovePuncuation(doc)
+    words <- WordPairs(temp)
+    single.probs <- WordProbs(words$single)
+    pairs.probs <- WordProbs(words$pairs)
+    if(length(single.probs$probs[single.probs$word==word1]) == 0){
+        print(paste(word1, "does not occur in the document."))
+    } else {
+        print(paste("The probability of '", word1, "' occuring is:", sep=""))
+        print(single.probs$probs[single.probs$word==word1])
+    }
+    if(length(single.probs$probs[single.probs$word==word2]) == 0){
+        print(paste(word2, "does not occur in the document."))
+    } else {
+        print(paste("The probability of '", word2, "' occuring is:", sep=""))
+        print(single.probs$probs[single.probs$word==word2])
+    }
+    pair <- pairs.probs %>% filter(words == paste(word1, word2, sep=":") | words == paste(word2, word1, sep=":"))
+    if(sum(pair$probs) == 0){
+        print("The two words do not occur together.")
+    } else {
+        print(paste("The probability of '", word1, "' and '", word2, "' occuring together is:", sep="")) 
+        print(sum(pair$probs))
+    }
+}
+```
+Now that these functions exist the final thing to do is test them out. I'll check for the existence of "for" and "the" occurring together along with some other pairs. Finally I'll test what happens if there are words that do not occur in the document.
+```{r}
+doc.pair <- scan('assign6.sample.txt', character(0), quote=NULL, sep="\n", encoding = "UTF-8")
+TwoWordProbs(doc.pair, "the", "for")
+TwoWordProbs(doc.pair, "a", "prison")
+TwoWordProbs(doc.pair, "prison", "Mr")
+TwoWordProbs(doc.pair, "bubbles", "for")
+```

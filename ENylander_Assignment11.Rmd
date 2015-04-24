@@ -1,0 +1,105 @@
+---
+title: "Assignment 11 - Regression Modeling"
+author: "Erik Nylander"
+date: "Thursday, April 09, 2015"
+output: html_document
+---
+
+### Modeling Maximum Heart Rate vs. Age
+In the first part of this week's assignment we will be modeling the relationship between a persons age and maximum heart rate. Our expected relationship is:
+$$
+MaxHR = 220 - Age
+$$
+Lets enter the data from the assignment into R:
+```{r}
+age <- c(18, 23, 25, 35, 65, 54, 34, 56, 72, 19, 23, 42, 18, 39, 37)
+maxHR <- c(202, 186, 187, 180, 156, 169, 174, 172, 153, 199, 193, 174, 198, 183, 178)
+heart <- data.frame(age, maxHR)
+```
+
+Now we can use R's built in lm() function to generate a linear regression model fitting max heart rate to age.
+```{r}
+fit1 <- lm(maxHR ~ age, data=heart)
+fit1
+```
+
+From this we can see that the linear model for our data follows the relationship:
+$$
+MaxHR = 210.0485 - 0.7977Age
+$$
+
+Now lets see if this model is significant. We can do this by calling the summary() of our fitted model.
+```{r}
+summary(fit1)
+```
+
+From our table of data we can reject $H_0$ that there is no effect of Age on MaxHR and conclude that there is a correlation between Age and MaxHR. The significance level of this relationship is $3.85 \times 10^{-8}$.
+
+We can also plot this linear model along with our MaxHR and Age data. We will add in a 95% confidence region to the graph using the stat_smooth() function.
+```{r}
+library(ggplot2)
+ggplot(heart, aes(age, maxHR)) + geom_point() + 
+    stat_smooth(level=.95, method = lm) + xlab("Age") + ylab("Maximum Heart Rate") +
+    ggtitle("Maximum Heart Rate vs Age")
+```
+
+### Linear Regression Analysis of Auto Data Set
+For this problem we will takin the Auto data set and constructing the linear model for the mpg variable. First to load the data:
+```{r}
+auto <- read.table('auto-mpg.data', 
+                   col.names=c('displacement', 'horsepower', 'weight', 'acceleration', 'mpg'))
+```
+
+Now that we have a data frame that contains our data we can start working through the analysis. First we will take a random sample of 40 rows and calculate the linear model for these 40 observations. We will also construct the 95% Confidence Interval for each of the variables using the confint() function. We could also construct this by finding:
+$$
+.95 CI = Coefficient \pm 2 \times StdError
+$$
+For each variable in our model.
+```{r}
+set.seed(42)
+auto40 <- auto[sample(nrow(auto), 40),]
+fit2 <- lm(mpg ~ ., data = auto40)
+fit2 
+summary(fit2)
+confint(fit2, level=0.95)
+```
+
+For our small sample of the dat we get the following model for the auto's mpg.
+$$
+mpg = 48.76 - 0.006 Displacment - 0.085 Horsepower - 0.005 Weight + 0.164 Acceleration
+$$
+We get the following standard errors and significance values for each of the coefficients.
+
+| *Variable* | *Coefficients* | *Standard Error* | *Significance Level* | *Lower 95% CI* | *Upper 95% CI* |
+|:----------:|:--------------:|:----------------:|:--------------------:|:--------------:|:--------------:|
+| Intercept  | 48.7606        | 11.8725          | 0.0002               | 24.6581        | 72.8632        |
+|Displacement| -0.0063        | 0.0239           | 0.7936               | -0.055         | 0.0423         |
+| Horsepower | -0.0858        | 0.1055           | 0.4216               | -0.3           | 0.1284         |
+| Weight     | -0.0056        | 0.0039           | 0.1664               | -0.0136        | 0.0024         |
+|Acceleration| 0.1646         | 0.6305           | 0.7955               | -1.1154        | 1.4448         |
+
+From the above data the only variable that is sgnificant in this sample is the intercept with a significance level of 0.0002. From this sample of 40 values we do not see any of the other variables being significant. We will now perform the same process on the entire data set and see if any of these results change.
+
+```{r}
+fit3 <- lm(mpg ~ ., data = auto)
+fit3
+summary(fit3)
+confint(fit3, level=0.95)
+```
+
+Using the full data we get the following results:
+$$
+mpg = 45.25 - 0.006 Displacment - 0.043 Horsepower - 0.005 Weight - 0.023 Acceleration
+$$
+
+From the summary() and confint() functions we get the following data:
+
+| *Variable* | *Coefficients* | *Standard Error* | *Significance Level* | *Lower 95% CI* | *Upper 95% CI* |
+|:----------:|:--------------:|:----------------:|:--------------------:|:--------------:|:--------------:|
+| Intercept  | 45.2511        | 2.456            | $2 \times 10^{-16}$  | 40.4222        | 50.08          |
+|Displacement| -0.006         | 0.0067           | 0.3716               | -0.0191        | 0.0072         |
+| Horsepower | -0.0436        | 0.0165           | 0.0088               | -0.0761        | -0.011         |
+| Weight     | -0.0052        | 0.0008           |$2.3 \times 10^{-10}$ | -0.0068        | -0.0036        |
+|Acceleration| -0.0231        | 0.1256           | 0.8538               | -0.27          | 0.2237         |
+
+From the above data we can see that the Intercept, Horespower and Weight all have a significant impact on the MPG of the auto's in the Auto Data set from looking at these values the Horsepower and Weight have a negative impact on the auto's MPG which is what we would expect and we can conclude from both the significance levels and the fact that 0 is not in the 95% CI for either of the values. With the other values, Displacement and Acceleration, the significance level and the 95% CI in the above table do not rule out the null hypotheses that these values are 0.

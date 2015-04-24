@@ -1,0 +1,120 @@
+---
+title: "Assignment 1"
+author: "Erik Nylander"
+date: "Friday, January 30, 2015"
+output: html_document
+---
+
+### Problem 1
+
+Given $u = \begin{bmatrix} 0.5\\ 0.5 \end{bmatrix}$ and $v = \begin{bmatrix} 3\\ -4 \end{bmatrix}$
+
+
+1) Calculate the dot product $u \cdot v$.
+$$ 
+\begin{bmatrix} 0.5\\ 0.5 \end{bmatrix} 
+\cdot 
+\begin{bmatrix} 3\\ -4 \end{bmatrix} = 
+0.5 * 3 + 0.5 * -4 = -0.5
+$$
+
+2) What are the lengths of $u$ and $v$?
+$$
+\| u \| = 
+\sqrt{u \cdot u} =
+\sqrt{0.5^2 + 0.5^2} =
+\sqrt{0.25} =
+.707
+$$
+$$
+\| v \| =
+\sqrt{v \cdot v} =
+\sqrt{3^2 + (-4)^2} =
+\sqrt{25} =
+5
+$$
+
+3) What is the linear combination: $3u - 2v$
+$$
+3u - 2v = 
+3 \begin{bmatrix} 0.5\\ 0.5 \end{bmatrix} -
+2 \begin{bmatrix} 3\\ -4 \end{bmatrix} =
+\begin{bmatrix} 1.5\\ 1.5 \end{bmatrix} -
+\begin{bmatrix} 6\\ -8 \end{bmatrix} =
+\begin{bmatrix} -4.5\\ 9.5 \end{bmatrix}
+$$
+
+4) What is the angle between$u$ and $v$?
+$$
+cos x = 
+\frac{u \cdot v}{\| u \| \| v \|} =
+\frac{-0.5}{.707 * 5}
+$$
+$$
+x = \arccos (\frac{-0.5}{.707 * 5}) = 1.712  98.13^\circ
+$$
+
+### Problem 2
+
+To solve the system of equations using 3 variable and 3 constraints I'll be using the elimination method to construct the upper triangular form. The only modification that I will be using is to create and augmented matrix from the coefficient matrix and constraints vector. This allows for easier manipulation of the constraints.
+
+```{r}
+solveByElimination <- function(A,b){
+    # Solves a 3X3 matrix by elimination
+    #
+    # Args:
+    #   A: A 3X3 matrix of the coefficients
+    #   b: A vector of the constraints
+    #
+    # Returns:
+    #   A vector of the solutions to the system of equations.
+    
+    A = cbind(A,b)
+    # Preforms Row swaps if A[1,1] is 0
+    if(A[1,1] == 0){
+        # Checks if both A[1,1] and A[2,1] are 0 and Swaps
+        if(A[2,1] == 0){
+           A <- A[c(3,1,2),]
+        } else {
+           A <- A[c(2,1,3),]
+        }
+        
+    }
+    # Uses A[1,1] as the pivot to eliminate the other values in the column
+    A[2,] <- A[2,] - ((A[2,1]/A[1,1])*A[1,])
+    A[3,] <- A[3,] - ((A[3,1]/A[1,1])*A[1,])
+    
+    # Checks to see if A[2,2] is a zero and swaps the row if it is.
+    if (A[2,2] == 0){
+        A <- A[c(1,3,2),]
+    }
+    # Uses A[2,2] as the pivot to eliminate the value in row 3
+    A[3,] <- A[3,] - ((A[3,2]/A[2,2]*A[2,]))
+    
+    # Solving by back subsitution
+    x3 <- A[3,4]/A[3,3]
+    x2 <- (A[2,4]-A[2,3]*x3)/A[2,2]
+    x1 <- (A[1,4]-A[1,2]*x2-A[1,3]*x3)/A[1,1]
+    
+    result <- c(x1,x2,x3)
+    return (result)
+}
+```
+
+Now I will check the function using the provided example of the following system:
+$$
+\begin{bmatrix} 1 & 1 & 3 \\ 2 & -1 & 5 \\ -1 & -2 & 4 \end{bmatrix}
+\begin{bmatrix} x_1 \\ x_2 \\ x_3 \end{bmatrix} =
+\begin{bmatrix} 1 \\ 2 \\ 6 \end{bmatrix}
+$$
+
+```{r}
+mat <- matrix(c(1,2,-1,1,-1,-2,3,5,4), ncol=3)
+con <- c(1,2,6)
+solveByElimination(mat, con)
+```
+
+This yields the solution:
+$$
+x = \begin{bmatrix} -1.545 \\ -0.318 \\ 0.954 \end{bmatrix}
+$$

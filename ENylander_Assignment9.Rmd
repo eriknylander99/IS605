@@ -1,0 +1,164 @@
+---
+title: "Assignment 9"
+author: "Erik Nylander"
+output: html_document
+---
+
+### Problems Set 1
+#### Producing a Random Sample using Inverse Sampling
+
+For the first problem we will be using an inverse sampling technique to sample the a random variable from the function that is distributed as follows:
+$$
+f(x) = \left\{ \begin{array}{1 1}
+x \quad 0 \leq x < 1 \\
+2-x \quad 1 \leq x \leq 2
+\end {array} \right.
+$$
+
+The next thing to do is create the inverse cdf function for this distribution. To accomplish this we need the anti-derivative for the above function. Computing this anti-derivative gives us the following:
+$$
+F(x) = \left\{ \begin{array}{1 1}
+\frac{x^2}{2} \quad 0 \leq x < 1 \\
+2x - \frac{x^2}{2} \quad 1 \leq x \leq 2
+\end{array} \right.
+$$
+
+Finally we calculate the inverse of the anti-derivative to construct the inverse cdf function.
+$$
+F^{-1}(x) = \left\{ \begin{array}{1 1}
+\sqrt{2y} \quad 0 \leq y < 0.5 \\
+2 - \sqrt{2(1 - y)} \quad 0.5 \leq y \leq 1
+\end{array} \right.
+$$
+
+Now to use the calculated inverse function to create the cdf function.
+```{r}
+require(ggplot2)
+inverseCDF <- function(y){
+    if(y >= 0 && y <= 1){
+        if(y <= 0.5){
+            return(sqrt(2*y))
+        } else {
+            return(2-sqrt(2*(1-y)))
+        }
+    }
+}
+```
+
+Now that we have our inverse cdf function we can apply it to a vector of randomly selected values between 0 and 1 and plot the output.
+```{r}
+sample.inv <- sapply(runif(20000), inverseCDF)
+sampleinv.df <- data.frame(sample.inv)
+ggplot(sampleinv.df, aes(sample.inv)) + geom_histogram(binwidth=.05) + 
+    ggtitle("Triangular PDF")
+```
+
+This distribution matches what we expect which is a triangular distribution with more values selected near 1 and fewer values selected at the endpoints of 0 and 2.
+
+#### Sampeling using R.
+
+For the second problem we will use the built in sampling function in R. Now that we've built our own sampling function it will be nice to use the one built in. To do this we first need to build a function that returns values defined in our second distribution.
+$$
+f(x) = \left\{ \begin{array}{1 1}
+1-x \quad 0 \leq x \leq 1 \\
+x-1 \quad 1 < x \leq 2
+\end {array} \right.
+$$
+
+```{r}
+fx2 <- function(x){
+    if(x >= 0 && x <= 2){
+        if(x < 1){
+            return(1-x)
+        } else {
+            return(x-1)
+        }
+    }
+}
+```
+
+Now we will create a vector of values between 0 and 2 and apply our function to the values to create a vector of probabilities that we can then use R's built in function to sample these values.
+```{r}
+xvec <- seq(0,2, by=0.01)
+fxvec <- sapply(xvec, fx2)
+sample1 <- sample(xvec, 20000, replace=TRUE, prob=fxvec)
+sample1.df <- data.frame(sample1)
+ggplot(sample1.df, aes(sample1)) + geom_histogram(binwidth=.05) + 
+    ggtitle("Inverted Triangular PDF")
+```
+
+The distribution matches what we expect since the cdf creates an inverse triangular shape with more values at the endpoints of 0 and 2 and less values in the middle.
+
+#### Demonstration of the Central Limit Theorem
+
+For the final part of this week's assignment we will redefine the first function and then use the built in features of R to sample both of our distributions, find the mean of the resulting sample, and plot our means to see if then approach a normal distribution.
+
+Redefining the first function:
+```{r}
+fx1 <- function(x){
+    if(x>= 0 && x <= 2){
+        if(x <= 1){
+            return(x)
+        } else {
+            return(2-x)
+        }
+    }
+}
+```
+
+Now to create a function that takes in our PDF and the sample size 'n' from our PDF. The function then collects 1000 samples of size 'n' and calculates the mean of each sample. The function prints out the mean and standard deviation for the run and creates a graph of the run.
+
+```{r}
+centralLimit <- function(n, pdf){
+    # Calculates the mean of 1000 samples of size n from the given PDF. Prints out the 
+    # mean and standard deviation and creates a plot.
+    #
+    # Args:
+    #   n = Size of the samples to be taken.
+    #
+    # Returns:
+    #   none
+    
+    require(ggplot2)
+    vec <- seq(0,2, by=0.01)
+    fxvec <- sapply(vec, pdf)
+    avg <- c()
+    for(i in 1:1000){
+        samp <- sample(vec, n, replace=TRUE, prob=fxvec)
+        avg <- c(avg, mean(samp))
+    }
+    print(paste(("The mean of the samples is: "), mean(avg)))
+    print(paste(("The standard deviation of the sample is: "), sd(avg)))
+    avg.df <- data.frame(avg)
+    ggplot(avg.df, aes(avg)) + geom_histogram() + xlab("Mean of the Sample") +
+        ggtitle("Central Limit Theorem")
+}
+```
+
+Now to test our centralLimit() function with our PDF's.
+
+```{r}
+# Testing with our first function:
+centralLimit(20, fx1)
+```
+
+We can see that this function has a mean near one with a standard deviation of .09. We also notice that the graph is taking on a bell shape.
+
+```{r}
+# Testing with the second function:
+centralLimit(20, fx2)
+```
+
+We can also see that our second function has a mean near 1 and has a slightly higher standard deviation near .15 which makes sense since the data in this distribution is concentrated in the two tails and will have more variance than the first function. We also notice that the graph is taking on a bell shape.
+
+Finally we will rerun both test with sample sizes of 100 to see what happens.
+
+```{r}
+# Testing the first function:
+centralLimit(100, fx1)
+
+# Testing the second function:
+centralLimit(100, fx2)
+```
+
+From this last test we can see that our means are still at 1 and the standard deviations are getting smaller with the second function still having a larger variance than the first.

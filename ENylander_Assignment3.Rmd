@@ -1,0 +1,182 @@
+---
+title: "Assignment 3"
+author: "Erik Nylander"
+date: "Tuesday, February 10, 2015"
+output: html_document
+---
+
+### Problem Set 1
+
+1) Calculate the rank of $A = \begin{bmatrix} 1 & 2 & 3 & 4 \\ -1 & 0 & 1 & 3 \\ 0 & 1 & -2 & 1 \\ 5 & 4 & -2 & -3 \end{bmatrix}$. To accomplish this we need to determine the number of non-zero pivots of $A$.
+
+$$
+A = \begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+-1 & 0 & 1 & 3 \\ 
+0 & 1 & -2 & 1 \\ 
+5 & 4 & -2 & -3 \end{bmatrix}
+\xrightarrow{r_1 + r_2}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 2 & 4 & 7 \\ 
+0 & 1 & -2 & 1 \\ 
+5 & 4 & -2 & -3 \end{bmatrix}
+\xrightarrow{r_4 - 5r_1}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 2 & 4 & 7 \\ 
+0 & 1 & -2 & 1 \\ 
+0 & -6 & -17 & -23 \end{bmatrix}
+\xrightarrow{r_2 \Leftrightarrow r_3}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 1 & -2 & 1 \\ 
+0 & 2 & 4 & 7 \\ 
+0 & -6 & -17 & -23 \end{bmatrix}
+$$
+$$
+\xrightarrow{r_3 - 2r_2}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 1 & -2 & 1 \\ 
+0 & 0 & 8 & 5 \\ 
+0 & -6 & -17 & -23 \end{bmatrix}
+\xrightarrow{r_4 + 6r_2}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 1 & -2 & 1 \\ 
+0 & 0 & 8 & 5 \\ 
+0 & 0 & -29 & 7 \end{bmatrix}
+\xrightarrow{r_4 + \frac{29}{8} r_3}
+\begin{bmatrix} 1 & 2 & 3 & 4 \\ 
+0 & 1 & -2 & 1 \\ 
+0 & 0 & 8 & 5 \\ 
+0 & 0 & 0 & 25.125 \end{bmatrix}
+$$
+Since $A$ can be reduced to an upper diagonal matrix with 4 non-zero pivots we have a matrix of rank 4.
+
+2) The maximum rank of an $m x n$ matrix where $m > n$ is given by the smaller of the two dimensions. Therefore the maximum rank of the $m x n$ matrix is rank $n$. If a matrix is non-zero, then it must contain at least one non-zero element. This element would serve as the pivot for the column it's in. This gives us at least one non-zero pivot for the matrix and a minimum rank of 1.
+
+3) Calculate the rank of matrix $B = \begin{bmatrix} 1 & 2 & 1 \\ 3 & 6 & 3 \\ 2 & 4 & 2 \end{bmatrix}$
+$$
+B = \begin{bmatrix} 1 & 2 & 1 \\ 3 & 6 & 3 \\ 2 & 4 & 2 \end{bmatrix}
+\xrightarrow{r_2 - 3r_1}
+\begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ 2 & 4 & 2 \end{bmatrix}
+\xrightarrow{r_3 - 2 r_1}
+\begin{bmatrix} 1 & 2 & 1 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix}
+$$
+Since matrix $B$ reduces down to a single row the matrix that has a rank of 1.
+
+
+### Problem Set 2
+Find the eigenvalues and eigenvectors for matrix $A = \begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix}$
+
+#### Eigenvalues
+$\lambda$ is an eigenvalue of $A$ if and only if $det(\lambda I_n - A) = 0$:
+$$
+det \left( \lambda 
+\begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix} - 
+\begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix} \right) = 
+det \left( 
+\begin{bmatrix} \lambda & 0 & 0 \\ 0 & \lambda & 0 \\ 0 & 0 & \lambda \end{bmatrix} - 
+\begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix}
+\right) = 
+det \left( 
+\begin{bmatrix} \lambda - 1 & -2 & -3 \\ 
+0 & \lambda - 4 & -5 \\ 
+0 & 0 & \lambda - 6 \end{bmatrix}
+\right) = 0
+$$
+$$
+(\lambda - 1) * det \begin{bmatrix} \lambda - 4 & -5 \\ 0 & \lambda - 6 \end{bmatrix} -
+(-2) * det \begin{bmatrix} 0 & -5 \\ 0 & \lambda - 6 \end{bmatrix} +
+(-3) * det \begin{bmatrix} 0 & \lambda - 4 \\ 0 & 0 \end{bmatrix} = 0
+$$
+$$
+(\lambda - 1)((\lambda - 4)(\lambda - 6) - 0) + 2(0 - 0) - 3(0 - 0) = 0
+$$
+This gives us the characteristic polynomial:
+$$
+\lambda^3 - 11\lambda^2 + 34\lambda - 24 = (\lambda - 1)(\lambda - 4)(\lambda - 6) = 0
+$$
+Which gives us the eigenvalues $\lambda = 1$, $\lambda = 4$, and $\lambda = 6$.
+
+#### Eigenvectors
+To calculate the eigenvectors for the eigenvalues found above I'll use the following equation:
+$$
+(A - \lambda I_n) \vec{v} = 0
+$$
+
+Calculating the eigenvectors for $\lambda = 1$.
+$$
+\left( \begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix} -
+\begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+\right)
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} =
+\begin{bmatrix} 0 & 2 & 3 \\ 0 & 3 & 5 \\ 0 & 0 & 5 \end{bmatrix}
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix}
+$$
+This is a system of equations and from the thrid line of the equation we get $5 v_3 = 0$ so $v_3 = 0$. We can use this to see that $3 v_2 - 5 v_3 = 0$ leads to $3 v_2 = 0$ so $v_2 = 0$. Finally from the first row we now have $0 v_1 = 0$. Using the above information gives the following eigenvector when $\lambda = 1$:
+$$
+v= \begin{pmatrix} 1 \\ 0 \\ 0 \end{pmatrix}
+$$
+
+Calculating the eigenvector for $\lambda = 4$.
+$$
+\left( \begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix} -
+\begin{bmatrix} 4 & 0 & 0 \\ 0 & 4 & 0 \\ 0 & 0 & 4 \end{bmatrix}
+\right)
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} =
+\begin{bmatrix} -3 & 2 & 3 \\ 0 & 0 & 5 \\ 0 & 0 & -2 \end{bmatrix}
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix}
+$$
+Taking the third row we get that:
+$-2 v_3 = 0$ or $v_3 = 0$
+Taking this information and the first row gives the following:
+$$
+-3 v_1 + 2 v_2 = 0
+$$
+Solving this for $v_2$ gives the following.
+$$
+\frac{3}{2} v_1 = v_2
+$$
+This information allows gives us the following eigenvector when $\lambda = 4$:
+$$
+v= \begin{pmatrix} 1 \\ \frac{3}{2} \\ 0 \end{pmatrix}
+$$
+
+Calculating the eigenvector for $\lambda = 6$.
+$$
+\left( \begin{bmatrix} 1 & 2 & 3 \\ 0 & 4 & 5 \\ 0 & 0 & 6 \end{bmatrix} -
+\begin{bmatrix} 6 & 0 & 0 \\ 0 & 6 & 0 \\ 0 & 0 & 6 \end{bmatrix}
+\right)
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix} =
+\begin{bmatrix} -5 & 2 & 3 \\ 0 & -2 & 5 \\ 0 & 0 & 0 \end{bmatrix}
+\begin{bmatrix} v_1 \\ v_2 \\ v_3 \end{bmatrix}
+$$
+This yields a messier set of equations:
+$$
+-5 v_1 + 8 v_3 = 0
+$$
+and
+$$
+-2 v_2 + 5 v_3 = 0
+$$
+Working with the first equation give the following:
+$$
+v_3 = \frac{5}{8} v_1
+$$
+Working with the second equation gives the following:
+$$
+v_3 = \frac{2}{5} v_2
+$$
+We can substitute this back into the first equation to get:
+$$
+-5 v_1 = -8(\frac{2}{5} v_2)
+$$
+So
+$$
+-5 v_1 = \frac{-16}{5} v_2
+$$
+or
+$$
+v_2 = \frac{25}{26} v_1
+$$
+Now that we have all terms in terms of $v_1$ we can find the eigenvector when $\lambda = 6$:
+$$
+v= \begin{pmatrix} 1 \\ \frac{25}{16} \\ \frac{5}{8} \end{pmatrix}
+$$

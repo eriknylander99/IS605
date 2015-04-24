@@ -1,0 +1,160 @@
+---
+title: "Assignment 10 - PageRank"
+author: "Erik Nylander"
+date: "Thursday, April 02, 2015"
+output: html_document
+---
+
+### PageRank
+For this week's assignment we will be looking at Google's PageRank Algorithm for a small universe of 6 URLs as described in this weeks assignment. We will start with the Transition Matrix that describes the link structure of our universe. In this matrix each column represents a vertex.
+$$
+A = \begin{bmatrix} 
+0 & 0 & \frac{1}{4} & 0 & 0 & 0 \\ 
+\frac{1}{2} & 0 & \frac{1}{4} & 0 & 0 & 0 \\ 
+\frac{1}{2} & 1 & 0 & 0 & 0 & \frac{1}{2} \\ 
+0 & 0 & 0 & 0 & \frac{1}{2} & \frac{1}{2} \\
+0 & 0 & \frac{1}{4} & \frac{1}{2} & 0 & 0 \\
+0 & 0 & \frac{1}{4} & \frac{1}{2} & \frac{1}{2} & 0
+\end{bmatrix}
+$$
+
+We will also start with an initial rank of each of the URLs, $r_i$ of:
+$$
+r_i = \begin{bmatrix}
+\frac{1}{6} \\
+\frac{1}{6} \\
+\frac{1}{6} \\
+\frac{1}{6} \\
+\frac{1}{6} \\
+\frac{1}{6} \\
+\end{bmatrix}
+$$
+
+```{r}
+# Forming matrix A and r_i
+A = matrix(c(0,.5,.5,0,0,0,
+             0,0,1,0,0,0,
+             .25,.25,0,0,.25,.25,
+             0,0,0,0,.5,.5,
+             0,0,0,.5,0,.5,
+             0,0,.5,.5,0,0), ncol=6)
+r = matrix(c(1/6,1/6,1/6,1/6,1/6,1/6), ncol=1)
+```
+
+Given these starting conditions we will also introduce a matrix $B$ that introduces the concept of decay into the algorithm we will find $B$ by computing the following:
+$$
+B = 0.85 \times A + \frac{0.15}{n}
+$$
+
+Given that our universe contains 6 URLs we will set $n=6$.
+```{r}
+B=.85*A+(.15/6)
+```
+
+#### Power Iteration
+Now given the above initial conditions we can use the power iteration formula given by:
+$$
+r_f = A^k \times r_i
+$$
+
+Where $k$ is the number of iterations of the algorithm that we want to run. This algorithm should converge after a "sufficient"" number of iterations. We will construct a function to compute this algorithm.
+```{r}
+powerIteration <- function(M, rank, k){
+    # Preforms power Iterations to calculate the probability of landing on a given page
+    # given the following.
+    #
+    # Args:
+    #   M = Transition Matrix
+    #   r = Initial Rank of the urls
+    #   k = Number of Iterations
+    #
+    # Returns:
+    #   r_f = Final probability computed from performing the power iteration process.
+    Atemp = diag(dim(M)[1])
+    if(k == 0){
+        return(rank)
+    }
+    for(i in 1:k){
+        Atemp = Atemp %*% M
+    }
+    return(Atemp %*% rank)
+}
+```
+
+Now to test this function to make sure that we will get the expected results:
+```{r}
+r
+powerIteration(A,r,0)
+A%*%A%*%r
+powerIteration(A,r,2)
+```
+
+Now that we know that our power iteration function works we can compute a the $r_f$ value from a "sufficient" number of iterations applied to $B$. Lets go with 50:
+```{r}
+power_r <- powerIteration(B,r,50)
+power_r
+```
+
+#### Eigen-decomposition
+
+For the second part of our exploration of the PageRank Algorithm we will compute the eigen-decomposition of $B$. We will also verify that the largest eigenvalue is 1 and that the eigenvector that is associated with the largest eigenvalue is a scalar multiple of our PageRank vector, $r_f$.
+```{r}
+decomp <- eigen(B)
+```
+
+Finding the largest eigenvalue:
+```{r}
+eigen_val <- as.numeric(decomp$val)
+eigen_val[which.max(eigen_val)]
+```
+
+Finding the corresponding eigenvector:
+```{r}
+eigen_r <- as.numeric(decomp$vectors[,which.max(decomp$values)])
+eigen_r
+```
+
+As we can see the the eigenvector looks nothing like what we expected or the $r_f$ Apparently the eigen() function attempts to normalize the eigenvector so we will need to manipulate the eigenvector with a scalar multiple to get the results that we expect.
+```{r}
+scalar <- power_r/eigen_r
+scalar
+```
+
+Given that all of the values of the scalar vector are equal to a scale difference of -0.4334254 we can use this to transform our eigenvector into a vector of positive values that sums to 1.
+```{r}
+eigen_scale_r <- eigen_r * scalar
+eigen_scale_r
+sum(eigen_scale_r)
+```
+
+#### Using the igraph() package.
+For this final part we will use the *igraph()* package to determine the page rank.
+```{r}
+library(igraph)
+
+# Creating the Adjacency Graph from the matrix A
+graphObject <- graph.adjacency(A,weighted=TRUE, mode="directed")
+plot(graphObject)
+```
+
+If we take a look at the graph we notice that the graph has the correct shape but that all of the links are backwards. We can further see this if we take a look at the PageRank vector.
+```{r}
+page.rank(graphObject)$vector
+```
+
+Reading through the documentation for the *igraph()* package we note that they treat each row as a vertex where we set each column as a vertex. Transposing our original vector and running it through the *igraph()* package give us the expected results.
+
+```{r}
+graphObject <- graph.adjacency(t(A),weighted=TRUE, mode="directed")
+plot(graphObject)
+page_r <- page.rank(graphObject)$vector
+page_r
+```
+
+As we can see from these results all three methods return the same PageRank or probability that a visitor will end up on a given pages after k clicks, with some manipulation! 
+
+```{r}
+power_r
+eigen_scale_r
+page_r
+```

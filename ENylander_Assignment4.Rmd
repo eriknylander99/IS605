@@ -1,0 +1,166 @@
+---
+title: "Assignment 4"
+author: "Erik Nylander"
+date: "Sunday, February 15, 2015"
+output: html_document
+---
+
+### Problem Set 1
+Given matrix $A$
+$$
+A = \begin{bmatrix} 1 & 2 & 3 \\ -1 & 0 & 4 \end{bmatrix}
+$$
+```{r}
+A <- matrix(c(1,-1,2,0,3,4), nrow=2)
+```
+The first thing to do is to compute $X = A A^T$ and $Y = A^T A$. In order to accomplish this I've written two functions. The first computes the transpose of a given function and the second computes a matrix multiplication.  As I found out later we did not need to write these functions but I figured I would go ahead and use the ones I created.
+
+```{r}
+Transpose <- function(A){
+    # Computes the transpose of a matrix.
+    #
+    # Args:
+    #   A = A matrix
+    #
+    # Returns:
+    #   t = the transpose of matrix A
+    
+    t <- cbind(A[1,])
+    for(i in 2:dim(A)[1]){
+        t <- cbind(t, A[i,])
+    }
+    return(t)
+}
+```
+Testing the function against the built in function we get:
+```{r}
+Transpose(A)
+t(A)
+```
+The second function takes two matrices as inputs and computes the multiplication of the matrices.
+```{r}
+MatrixMultiply <- function(A, B){
+    # Multiplies two matrices A and B together as AB.
+    #
+    # Args:
+    #   A = Left matrix in the multiplication.
+    #   B = Right matrix in the multiplication.
+    #
+    # Returns:
+    #   result = the result of the matrix multiplication AB
+    
+    if(dim(A)[1] != dim(B)[2]){
+        stop('Dimension Mismatch')
+    }
+    result <- matrix(, nrow=dim(A)[1], ncol=dim(B)[2])
+    for(i in 1:dim(A)[1]){
+        for(j in 1:dim(B)[2]){
+            result[i,j] <- sum(A[i,]*B[,j])
+        }
+    }
+    return(result)
+}
+```
+Testing the MatrixMultiply function against the built-in function with $A A^T$:
+```{r}
+MatrixMultiply(A,Transpose(A))
+A%*%t(A)
+```
+
+Now I'll use the these functions to compute the $X$ and $Y$ values from above.
+```{r}
+X <- MatrixMultiply(A, Transpose(A))
+Y <- MatrixMultiply(Transpose(A), A)
+```
+
+Now that matrix $X$ and $Y$ have been created, the next step is to find the eigenvalues and eigenvectors for each matrix and store these in variables. The function returns a vector containing the eigenvalues for each matrix and a matrix where each column is the eigenvector that corresponds with each eigenvalue.
+
+```{r}
+eigen.X <- eigen(X)
+eigen.X$values
+eigen.X$vectors
+```
+This gives the following eigenvalues and and eigenvectors for $X$:
+$\lambda = 26.601802$ and $\lambda = 4.398198$ with the corresponding eigenvectors of $v = \begin{pmatrix} 0.6576043 \\ 0.7533635 \end{pmatrix}$ and $v = \begin{pmatrix} -0.7533635 \\ 0.6576043 \end{pmatrix}$
+```{r}
+eigen.Y <- eigen(Y)
+eigen.Y$values
+eigen.Y$vectors
+```
+This gives us the following eigenvalues and eigenvectors for $Y$:
+$\lambda = 26.601802$ and $\lambda = 4.398198$ and $\lambda \approx 0$ with the corresponding eigenvectors of $v = \begin{pmatrix} -0.01856629 \\ 0.245499937 \\ 0.96676296 \end{pmatrix}$ , $v = \begin{pmatrix} -0.6727903 \\ -0.7184510 \\ 0.1765824 \end{pmatrix}$ , and $v = \begin{pmatrix} 0.7396003 \\ -0.6471502 \\ 0.1849001 \end{pmatrix}$
+
+Next I'll be using the svd() function to calculate the singular values and the left- and right-singular vectors for $A$. The returns vector of the singular values and two matrices that contain the left and right singular vectors as columns of the matrices.
+```{r}
+svd.A <- svd(A, nu=dim(A)[1], nv=dim(A)[2])
+svd.A$d
+svd.A$u
+svd.A$v
+(svd.A$d)^2
+```
+This gives us the singular values of 5.157693 and 2.097188 along with the left singular vectors of: $v = \begin{pmatrix} -0.6576043 \\ -0.7533635 \end{pmatrix}$ and $v = \begin{pmatrix} -0.7533635 \\ 0.6576043 \end{pmatrix}$ and the right singular values of $v = \begin{pmatrix} 0.01856629 \\ -0.245499937 \\ -0.96676296 \end{pmatrix}$ , $v = \begin{pmatrix} -0.6727903 \\ -0.7184510 \\ 0.1765824 \end{pmatrix}$ , and $v = \begin{pmatrix} -0.7396003 \\ 0.6471502 \\ -0.1849001 \end{pmatrix}$
+
+Finally we will compare the results of computing the eigenvalues and eigenvectors with the results of the Singular Value Decomposition. First lets look at the eigenvectors of $X$ with the left singular vectors.
+```{r}
+eigen.X$vectors
+svd.A$u
+```
+Examining these vectors we can see that these are vectors are the same vectors with the possibility that one of the vectors is multiplied by a scalar of -1. Since these vectors are the same vectors with only a scalar difference we know that they define the same plane, therefore the left singular vectors are also eigenvectors for X.
+
+Next lets look at the eigenvectors of $Y$ with the right singular vectors.
+```{r}
+eigen.Y$vectors
+svd.A$v
+```
+As we saw in the previous problem, we can see that these are vectors that define the same plane with only a scalar multiplication, therefore the left singular vectors are also eigenvectors for Y.
+
+Finally lets look at the results of the eigenvalues and the square of singular values.
+```{r}
+eigen.X$values
+eigen.Y$values
+svd.A$d^2
+```
+Notice that the eigenvalues for $X$, the eigenvalues for $Y$ and the result of the square of the singular values are return the same result.
+
+### Problem Set 2
+For problem set 2 I've written the following function which calculates the inverse of a function using co-factors. The function computes the co-factor matrix, finds it's transpose, and divides by the determinant of the given matrix to calculate the inverse.
+
+```{r}
+myinverse <- function(A){
+    # Computes the inverse for a well-conditioned, full-rank square matrix.
+    #
+    # Args:
+    #   A = Matrix to be inverted.
+    #
+    # Returns:
+    #   A.inverse = The inverse of the matrix A
+    
+    if(det(A) == 0){
+        stop('Non-invertable Matrix')
+    }
+    C <- matrix(, nrow=dim(A)[1], ncol=dim(A)[2])
+    for(i in 1:dim(A)[1]){
+        for(j in 1:dim(A)[2]){
+            C[i,j] <- (-1)^(i+j) * det(A[-i,-j])
+        }
+    }
+    CT <- t(C)
+    A.inverse <- CT/det(A)
+    return(A.inverse)
+}
+```
+
+Now that I've got the myinverse() function I'll take a sample matrix and compute it's inverse. Finally I'll check and see if the original matrix times it's inverse give us the identity matrix.
+```{r}
+set.seed(42)
+(A<-matrix(sample(1:10, 9, replace=TRUE), nrow=3))
+(B <- myinverse(A))
+```
+Now that we have a matrix $A$ and it's inverse $B$ I'll check to see that $AB = I$.
+```{r}
+A%*%B
+# Notice that the matrix has a lot of noise that appears to give us 1's on the diagonal and 
+# 0's off diagonal. Lets round a bit and see what we get.
+round(A%*%B, digits=5)
+```
+Notice that once we round a bit to clean up the answers we do get the $AB = I$, therefore the myinverse() function calculates the inverse for a well-conditioned, full-rank square matrix.
