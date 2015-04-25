@@ -1,5 +1,44 @@
-2015-04-21 20:49:58 EDT LOG:  received fast shutdown request
-2015-04-21 20:49:58 EDT LOG:  aborting any active transactions
-2015-04-21 20:49:58 EDT LOG:  autovacuum launcher shutting down
-2015-04-21 20:49:58 EDT LOG:  shutting down
-2015-04-21 20:49:58 EDT LOG:  database system is shut down
+---
+title: "Assignment 12 - Bias Variance Trade-off"
+author: "Erik Nylander"
+date: "04/17/2015"
+output: html_document
+---
+
+### Bias vs Variance
+For this week’s assignment we will be looking at the trade-off between the variance in a model and the bias of the model. To accomplish this we will look at the auto.mpg data set and fit a number of different polynomial models to the data. First lets load the data set and the necessary libraries:
+
+```{r}
+library(stats)
+library(boot)
+auto <- read.table('auto-mpg.data', 
+                   col.names=c('disp', 'hp', 'wt', 'acc', 'mpg'))
+head(auto)
+```
+
+Now that we have our data in R, we can start to fit models. For this assignment I’ve constructed a small for loop that fits all of the possible polynomial models between from: 
+
+**Degree 1**
+$$
+mpg = Intercept + \beta_1(Disp+HP+Wt+Acc)
+$$
+to **Degree 9**
+$$
+mpg=Intercept + \beta_1(Disp+HP+Wt+Acc) + \dots + \beta_9(Disp+HP+Wt+Acc)^9
+$$
+
+As we fit each model we will also measure the cross validation error using the cv.glm() function. We will take the raw cross-validation value from the function and plot these values.
+```{r}
+set.seed(7)
+delt <- c()
+for(i in 1:9){
+    fit <- glm(mpg ~ poly(disp+hp+wt+acc, i), data=auto)
+    delt[i] <- cv.glm(auto, fit, K=5)$delta[1]
+}
+
+degree <- 1:9
+plot(degree, delt, type='b')
+```
+From the plot of the cross-validation errors we can see the classical U shape that represents the relationship between Bias and Variance in models. At first as we have a model that is under-fit resulting in a model that is biased but has a lower variance. As we up the degree of the polynomial model the bias decreases without causing much of an increase in the variance but as we continue to up the degree of the polynomial that we are fitting to the data we start to over-fit the model reducing the bias but causing the variance to increased in the model. We see this as an increases in the cross-validation error which causes the U shape in the plot.
+
+We can also see from this run that a 3rd degree polynomial may be a strong choice for minimizing the cross-validation error in the model.
